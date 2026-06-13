@@ -4,11 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>FourGym | Manajemen Gym & Fitness + Cetak Struk</title>
+    <title>FourGym | Manajemen Gym & Fitness - Struk PDF</title>
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- jsPDF & autoTable untuk generate PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -115,6 +118,15 @@
         }
         .btn-secondary:hover {
             background: #3a3a3a;
+        }
+        .btn-pdf {
+            background: #d9534f;
+            color: white;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+        }
+        .btn-pdf:hover {
+            background: #c9302c;
         }
         input, select {
             background: #1e1e1e;
@@ -302,36 +314,12 @@
             background: #e6b422;
             color: black;
         }
-        /* Style untuk cetak struk */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            .print-receipt, .print-receipt * {
-                visibility: visible;
-            }
-            .print-receipt {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                padding: 20px;
-                background: white;
-                color: black;
-                font-size: 14px;
-            }
-            .print-receipt button {
-                display: none;
-            }
-        }
-        .btn-print {
-            background: #2c5a2c;
-            margin-top: 8px;
-            font-size: 0.7rem;
-            padding: 4px 12px;
-        }
-        .btn-print:hover {
-            background: #3e7a3e;
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
     </style>
 </head>
@@ -352,7 +340,7 @@
     <div class="hero">
         <div class="hero-content">
             <h2>✨ Selamat datang di FourGym ✨</h2>
-            <p style="font-size: 1.1rem; max-width: 600px;">Tempat terbaik untuk membangun kesehatan, kebugaran, dan gaya hidup aktif. Dapatkan membership, suplemen, perlengkapan olahraga, dan nikmati kemudahan pembayaran QRIS + Cetak Struk.</p>
+            <p style="font-size: 1.1rem; max-width: 600px;">Tempat terbaik untuk membangun kesehatan, kebugaran, dan gaya hidup aktif. Dapatkan membership, suplemen, perlengkapan olahraga, dan nikmati kemudahan pembayaran QRIS + Cetak Struk PDF.</p>
         </div>
     </div>
 
@@ -410,7 +398,7 @@
                     <button id="checkoutQrisBtn" class="btn-primary" style="width: 100%; margin-top: 18px;"><i class="fas fa-qrcode"></i> Bayar dengan QRIS</button>
                 </div>
                 <div class="card">
-                    <div class="section-title"><i class="fas fa-history"></i> Riwayat Pembayaran & Cetak Struk</div>
+                    <div class="section-title"><i class="fas fa-history"></i> Riwayat Pembayaran</div>
                     <div id="historyList" style="max-height: 380px; overflow-y: auto;"></div>
                 </div>
             </div>
@@ -419,7 +407,7 @@
 
     <footer>
         <i class="fas fa-user-check"></i> Fajar Rio Dinata / M. Algerija Hertyaz Paslam | NIM: 251410025 / 251410021<br>
-        © 2025 FourGym - Bangun kesehatan & gaya hidup aktif | Fitur Cetak Struk Tersedia
+        © 2025 FourGym - Bangun kesehatan & gaya hidup aktif | Struk pembayaran PDF tersedia
     </footer>
 </div>
 
@@ -527,6 +515,81 @@
         }
     }
 
+    // Fungsi Cetak Struk PDF menggunakan jsPDF
+    async function printStrukPDF(transaction) {
+        // Pastikan jsPDF sudah tersedia
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Header FourGym
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(230, 180, 34); // warna emas
+        doc.text("FOURGYM", 105, 20, { align: "center" });
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Tempat terbaik untuk kesehatan & kebugaran", 105, 28, { align: "center" });
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        doc.text(`Jl. Fitnes No. 1, FourCity | Telp: (021) 1234-5678`, 105, 36, { align: "center" });
+        
+        // Garis
+        doc.line(20, 42, 190, 42);
+        
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("STRUK PEMBAYARAN", 105, 52, { align: "center" });
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.text(`Tanggal : ${transaction.date}`, 20, 65);
+        doc.text(`ID Transaksi : ${transaction.id}`, 20, 73);
+        doc.text(`Nama Member : ${currentUser.name || currentUser.username}`, 20, 81);
+        
+        // Tabel item
+        const tableBody = [];
+        let total = 0;
+        
+        // Membership
+        if (transaction.membership) {
+            tableBody.push([transaction.membership.name, "1", `Rp ${transaction.membership.price.toLocaleString()}`]);
+            total += transaction.membership.price;
+        }
+        // Produk
+        if (transaction.productItems && transaction.productItems.length) {
+            transaction.productItems.forEach(item => {
+                const subtotal = item.price * item.quantity;
+                tableBody.push([item.name, item.quantity.toString(), `Rp ${subtotal.toLocaleString()}`]);
+                total += subtotal;
+            });
+        }
+        
+        doc.autoTable({
+            startY: 90,
+            head: [['Item', 'Qty', 'Subtotal']],
+            body: tableBody,
+            theme: 'striped',
+            headStyles: { fillColor: [230, 180, 34], textColor: [0,0,0], fontStyle: 'bold' },
+            margin: { left: 20, right: 20 },
+        });
+        
+        let finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(`Total Bayar : Rp ${total.toLocaleString()}`, 140, finalY, { align: "right" });
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Metode Pembayaran : QRIS`, 140, finalY + 8, { align: "right" });
+        
+        // Footer
+        doc.setFontSize(8);
+        doc.setTextColor(150,150,150);
+        doc.text("Terima kasih telah berolahraga di FourGym! Sehat & Bugar bersama kami.", 105, finalY + 20, { align: "center" });
+        doc.text(`Petugas: ${currentUser.name || currentUser.username} | Dicetak: ${new Date().toLocaleString()}`, 105, finalY + 28, { align: "center" });
+        
+        // Simpan PDF
+        doc.save(`Struk_FourGym_${transaction.id}.pdf`);
+    }
+
     // cart functions
     function addProductToCart(product) {
         const existing = cart.items.find(i => i.id === product.id);
@@ -602,78 +665,6 @@
         document.getElementById("totalPrice").innerHTML = `Rp${getCartTotal().toLocaleString()}`;
     }
 
-    // FUNGSI CETAK STRUK (printable)
-    function printReceipt(transaction) {
-        // Buat elemen div untuk cetak
-        const printWindow = window.open('', '_blank', 'width=500,height=600');
-        printWindow.document.write(`
-            <html>
-            <head><title>Struk Pembayaran FourGym</title>
-            <style>
-                body { font-family: 'Courier New', monospace; padding: 20px; max-width: 400px; margin: auto; }
-                .receipt { border: 1px dashed #000; padding: 16px; }
-                .header { text-align: center; margin-bottom: 16px; }
-                .title { font-size: 20px; font-weight: bold; }
-                .items { width: 100%; margin: 12px 0; }
-                .items th, .items td { text-align: left; padding: 4px 0; }
-                .total { font-weight: bold; border-top: 1px solid #000; padding-top: 8px; margin-top: 8px; }
-                .footer { text-align: center; margin-top: 20px; font-size: 12px; }
-                hr { margin: 12px 0; }
-            </style>
-            </head>
-            <body>
-            <div class="receipt">
-                <div class="header">
-                    <div class="title">🏋️‍♂️ FOURGYM 🏋️‍♀️</div>
-                    <div>Tempat terbaik untuk kebugaran</div>
-                    <div>${new Date(transaction.date).toLocaleString()}</div>
-                    <div>Transaksi: ${transaction.id}</div>
-                </div>
-                <hr>
-                <div><strong>Pelanggan:</strong> ${currentUser?.name || currentUser?.username}</div>
-                <div><strong>Metode Bayar:</strong> QRIS</div>
-                <hr>
-                <table class="items">
-                    <thead><tr><th>Item</th><th>Qty</th><th>Harga</th><th>Subtotal</th></tr></thead>
-                    <tbody>
-        `);
-        // Daftar item dari transaction.detail atau itemsSummary
-        let itemsList = [];
-        if (transaction.detail) {
-            if (transaction.detail.membership) {
-                const m = transaction.detail.membership;
-                printWindow.document.write(`<tr><td>${m.name}</td><td>1</td><td>Rp${m.price.toLocaleString()}</td><td>Rp${m.price.toLocaleString()}</td></tr>`);
-                itemsList.push(`${m.name}`);
-            }
-            if (transaction.detail.productItems && transaction.detail.productItems.length) {
-                transaction.detail.productItems.forEach(p => {
-                    const subtotal = p.price * p.quantity;
-                    printWindow.document.write(`<tr><td>${p.name}</td><td>${p.quantity}</td><td>Rp${p.price.toLocaleString()}</td><td>Rp${subtotal.toLocaleString()}</td></tr>`);
-                    itemsList.push(`${p.name} x${p.quantity}`);
-                });
-            }
-        } else {
-            // fallback berdasarkan itemsSummary
-            if (transaction.itemsSummary && transaction.itemsSummary.length) {
-                transaction.itemsSummary.forEach(sum => {
-                    printWindow.document.write(`<tr><td>${sum}</td><td>1</td><td>-</td><td>-</td></tr>`);
-                });
-            }
-        }
-        printWindow.document.write(`
-                    </tbody>
-                </table>
-                <div class="total">Total: Rp${transaction.total.toLocaleString()}</div>
-                <hr>
-                <div class="footer">Terima kasih telah berolahraga di FourGym!<br>Sehat, Bugar, & Aktif 💪</div>
-            </div>
-            <script>window.onload = function() { window.print(); setTimeout(function(){ window.close(); }, 500); }<\/script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-    }
-
     function renderHistory() {
         const histContainer = document.getElementById("historyList");
         if (!histContainer || !currentUser) return;
@@ -684,32 +675,33 @@
         }
         let html = "";
         transactions.forEach(tr => {
-            let itemList = tr.itemsSummary?.join(', ') || (tr.detail ? 'Lihat detail' : 'Transaksi');
+            let itemList = tr.itemsSummary || [];
             html += `<div class="history-item">
-                        <div class="flex-between">
-                            <span><i class="fas fa-receipt"></i> ${tr.date}</span>
-                            <span class="badge">Rp${tr.total.toLocaleString()}</span>
+                        <div class="history-header">
+                            <div><i class="fas fa-receipt"></i> ${tr.date}</div>
+                            <div><span class="badge">Rp${tr.total.toLocaleString()}</span></div>
                         </div>
-                        <div class="text-muted" style="margin-top:6px">${itemList.substring(0, 80)}</div>
-                        <div class="flex-between" style="margin-top: 10px;">
+                        <div class="text-muted" style="margin-top:6px">${itemList.join(', ') || 'Transaksi berhasil'}</div>
+                        <div class="flex-between" style="margin-top: 8px;">
                             <span><i class="fas fa-qrcode"></i> QRIS</span>
-                            <button class="btn-print" onclick="printReceiptFromHistory('${tr.id}')"><i class="fas fa-print"></i> Cetak Struk</button>
+                            <button class="btn-pdf" onclick="reprintStruk('${tr.id}')"><i class="fas fa-print"></i> Cetak Struk PDF</button>
                         </div>
                     </div>`;
         });
         histContainer.innerHTML = html;
-        // simpan mapping untuk cetak ulang
-        window._transactionsMap = {};
-        transactions.forEach(tr => { window._transactionsMap[tr.id] = tr; });
     }
 
-    window.printReceiptFromHistory = function(transactionId) {
-        const tr = window._transactionsMap[transactionId];
-        if (tr) printReceipt(tr);
-        else alert("Data transaksi tidak ditemukan");
+    // Cetak ulang berdasarkan ID transaksi
+    window.reprintStruk = function(transactionId) {
+        if (!currentUser || !currentUser.transactions) return;
+        const trans = currentUser.transactions.find(t => t.id === transactionId);
+        if (trans) {
+            printStrukPDF(trans);
+        } else {
+            alert("Transaksi tidak ditemukan!");
+        }
     };
 
-    // proses checkout QRIS
     let pendingTransaction = null;
     function initiateQRIS() {
         const total = getCartTotal();
@@ -727,7 +719,7 @@
             total: total,
             itemsSummary: itemsSummary,
             membership: cart.membership ? {...cart.membership} : null,
-            productItems: cart.items.map(i => ({...i}))
+            productItems: cart.items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity }))
         };
         pendingTransaction = transactionData;
         const qrText = `FourGym Payment: ${transactionId} | Total: Rp${total} | GymFit`;
@@ -744,27 +736,19 @@
             date: pendingTransaction.date,
             total: pendingTransaction.total,
             itemsSummary: pendingTransaction.itemsSummary,
-            detail: {
-                membership: pendingTransaction.membership,
-                productItems: pendingTransaction.productItems
-            }
+            membership: pendingTransaction.membership,
+            productItems: pendingTransaction.productItems,
         };
         addTransactionToUser(finalTrans);
-        // setelah transaksi sukses, tawarkan cetak struk
+        // Cetak struk PDF otomatis setelah pembayaran
+        printStrukPDF(finalTrans);
         clearCart();
-        const trId = finalTrans.id;
-        const savedTrans = window._transactionsMap ? window._transactionsMap[trId] : finalTrans;
-        document.getElementById("qrisModal").style.display = "none";
-        alert("✅ Pembayaran berhasil! Terima kasih.");
-        // Cetak struk otomatis
-        if (confirm("🖨️ Apakah Anda ingin mencetak struk pembayaran sekarang?")) {
-            printReceipt(finalTrans);
-        }
-        renderHistory();
         pendingTransaction = null;
+        document.getElementById("qrisModal").style.display = "none";
+        alert("✅ Pembayaran berhasil! Struk PDF telah diunduh secara otomatis.");
+        renderHistory();
     }
 
-    // Render produk & membership
     function renderProductsAndMembership() {
         const minumanDiv = document.getElementById("minumanList");
         const makananDiv = document.getElementById("makananList");
@@ -796,7 +780,6 @@
         }
     }
 
-    // Authentication
     function doLogin(username, password) {
         const users = loadUsers();
         const user = users.find(u => u.username === username && u.password === password);
@@ -870,7 +853,7 @@
         document.getElementById("tabRegisterBtn").classList.add("active");
         document.getElementById("tabLoginBtn").classList.remove("active");
     });
-    
+
     const sessionUser = getCurrentUserSession();
     if (sessionUser) {
         currentUser = sessionUser;
